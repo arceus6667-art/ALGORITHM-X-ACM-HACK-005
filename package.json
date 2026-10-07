@@ -1,1 +1,19 @@
-{"name":"agenttrap-trial-console","private":true,"type":"module","scripts":{"build":"node scripts/build.mjs","db:generate":"drizzle-kit generate"},"devDependencies":{"drizzle-kit":"0.31.10","drizzle-orm":"0.45.2","esbuild":"0.28.2"},"dependencies":{"@supabase/supabase-js":"2.117.3"}}
+{
+  "name": "agenttrap-trial-console",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "db:generate": "drizzle-kit generate",
+    "test": "node --test scripts/test-*.mjs desktop/test/*.test.mjs"
+  },
+  "devDependencies": {
+    "drizzle-kit": "0.31.10",
+    "drizzle-orm": "0.45.2",
+    "esbuild": "0.28.2",
+    "jsdom": "30.1.2"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.3"
+  }
+}
