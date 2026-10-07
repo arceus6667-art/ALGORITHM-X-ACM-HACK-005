@@ -15,53 +15,83 @@ export const Logo: React.FC<LogoProps> = ({
   linkToHome = true,
 }) => {
   const iconSizes = {
-    sm: "w-4 h-4",
-    md: "w-5 h-5",
-    lg: "w-6 h-6",
+    sm: "w-9 h-9",
+    md: "w-12 h-12",
+    lg: "w-16 h-16",
   };
 
   const textSizes = {
-    sm: "text-[13px]",
-    md: "text-[15px]",
-    lg: "text-[17px]",
+    sm: "text-[17px]",
+    md: "text-[21px]",
+    lg: "text-[26px]",
   };
 
   const symbol = (
     <div
       className={`inline-flex items-center gap-2.5 select-none ${className}`}
     >
-      {/* TRACE + TARGET + PATH Minimalist Geometric Symbol */}
+      {/* AgentTrap Shield + Network Node Logo */}
       <svg
-        viewBox="0 0 24 24"
+        viewBox="0 0 100 110"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className={`${iconSizes[size]} text-[#111111] shrink-0`}
+        className={`${iconSizes[size]} shrink-0`}
         aria-hidden="true"
       >
-        {/* Outer Incomplete Tracing Arc */}
+        {/* Shield outer shape */}
         <path
-          d="M12 3.5C6.7533 3.5 2.5 7.7533 2.5 13C2.5 18.2467 6.7533 22.5 12 22.5C16.1421 22.5 19.6644 19.8456 20.95 16.0"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
+          d="M50 4 L88 18 L88 28 L80 28 L80 36 L88 36 L88 62 C88 82 50 98 50 98 C50 98 12 82 12 62 L12 36 L20 36 L20 28 L12 28 L12 18 Z"
+          fill="currentColor"
         />
-        {/* Inbound Converging Signal Path Segment (forming subtle abstract A apex) */}
+        {/* Shield inner cutout (creates the frame look) */}
         <path
-          d="M6.5 7.5L12 12.5L17.5 7.5"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          d="M50 12 L82 24 L82 30 L74 30 L74 42 L82 42 L82 62 C82 78 50 92 50 92 C50 92 18 78 18 62 L18 42 L26 42 L26 30 L18 30 L18 24 Z"
+          fill="white"
         />
-        {/* Central Observation / Trace Node */}
-        <circle cx="12" cy="12.5" r="1.75" fill="currentColor" />
-        {/* Tracked Exit Vector Line */}
+        {/* Inner shield fill */}
         <path
-          d="M12 14.5V19.5"
-          stroke="currentColor"
-          strokeWidth="1.75"
-          strokeLinecap="round"
+          d="M50 20 L76 30 L76 36 L68 36 L68 48 L76 48 L76 62 C76 74 50 86 50 86 C50 86 24 74 24 62 L24 48 L32 48 L32 36 L24 36 L24 30 Z"
+          fill="currentColor"
         />
+
+        {/* Signal arcs (wifi-like) - white on black shield */}
+        {/* Outer arc */}
+        <path
+          d="M30 42 Q50 34 70 42"
+          stroke="white"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+        {/* Middle arc */}
+        <path
+          d="M36 50 Q50 44 64 50"
+          stroke="white"
+          strokeWidth="4.5"
+          strokeLinecap="round"
+          fill="none"
+        />
+
+        {/* Central node */}
+        <circle cx="50" cy="58" r="6" fill="white" />
+
+        {/* Left node */}
+        <circle cx="30" cy="54" r="5.5" fill="white" />
+
+        {/* Right node */}
+        <circle cx="70" cy="54" r="5.5" fill="white" />
+
+        {/* Bottom node */}
+        <circle cx="50" cy="76" r="5.5" fill="white" />
+
+        {/* Connector: center to left */}
+        <line x1="44" y1="56" x2="35" y2="54" stroke="white" strokeWidth="4" strokeLinecap="round" />
+
+        {/* Connector: center to right */}
+        <line x1="56" y1="56" x2="65" y2="54" stroke="white" strokeWidth="4" strokeLinecap="round" />
+
+        {/* Connector: center to bottom */}
+        <line x1="50" y1="64" x2="50" y2="71" stroke="white" strokeWidth="4" strokeLinecap="round" />
       </svg>
 
       {showWordmark && (

@@ -4,12 +4,155 @@ import { ArrowLeft, ArrowRight, FileText, UploadCloud } from "lucide-react";
 import { AnalysisReport } from "../components/content/AnalysisReport";
 import { Logo } from "../components/brand/Logo";
 import type { AnalysisResult, PlatformProfile } from "../../shared/types";
+
 const accepted = ".png,.jpg,.jpeg,.webp,.pdf,.txt,.docx";
+
+// Static platform list bundled at build-time from profiles.json via the API.
+// This ensures the dropdown is never empty even if the API response is slow.
+// The live fetch below will overwrite this with the canonical server list.
+const STATIC_PLATFORMS: PlatformProfile[] = [
+  {
+    id: "google-search",
+    name: "Google Search",
+    category: "Search",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "google-drive",
+    name: "Google Drive",
+    category: "Storage",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "gmail",
+    name: "Gmail",
+    category: "Email",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "gemini",
+    name: "Gemini",
+    category: "AI",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "chatgpt",
+    name: "ChatGPT",
+    category: "AI",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "claude",
+    name: "Claude",
+    category: "AI",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "whatsapp",
+    name: "WhatsApp",
+    category: "Messaging",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "dropbox",
+    name: "Dropbox",
+    category: "Storage",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    category: "Social",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "x",
+    name: "X (Twitter)",
+    category: "Social",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "reddit",
+    name: "Reddit",
+    category: "Social",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "onedrive",
+    name: "OneDrive",
+    category: "Storage",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "copilot",
+    name: "Microsoft Copilot",
+    category: "AI",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: "2026-10-07",
+  },
+  {
+    id: "instagram",
+    name: "Instagram",
+    category: "Social",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: null,
+  },
+  {
+    id: "facebook",
+    name: "Facebook",
+    category: "Social",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: null,
+  },
+  {
+    id: "tiktok",
+    name: "TikTok",
+    category: "Social",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: null,
+  },
+  {
+    id: "other",
+    name: "Other",
+    category: "Other",
+    facts: [],
+    officialSources: [],
+    lastVerifiedAt: null,
+  },
+];
+
 export const DemoPage: React.FC = () => {
-  const [platforms, setPlatforms] = useState<PlatformProfile[]>([]);
+  const [platforms, setPlatforms] = useState<PlatformProfile[]>(STATIC_PLATFORMS);
   const [file, setFile] = useState<File | null>(null);
   const [platformId, setPlatformId] = useState("");
-  const [search, setSearch] = useState("");
   const [report, setReport] = useState<AnalysisResult | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -17,6 +160,7 @@ export const DemoPage: React.FC = () => {
   const [reload, setReload] = useState(0);
   const input = useRef<HTMLInputElement>(null);
   const controller = useRef<AbortController | null>(null);
+
   useEffect(() => {
     const abort = new AbortController();
     Promise.all([
@@ -27,19 +171,23 @@ export const DemoPage: React.FC = () => {
       fetch("/api/health", { signal: abort.signal }).then((r) => r.json()),
     ])
       .then(([p, h]) => {
-        setPlatforms(p);
+        // Only overwrite with server list if it actually has entries
+        if (Array.isArray(p) && p.length > 0) setPlatforms(p);
         setMaxMB(h.maxUploadMB);
         setError("");
       })
       .catch(() => {
-        if (!abort.signal.aborted)
-          setError("Platform list unavailable. Check the backend and retry.");
+        if (!abort.signal.aborted) {
+          // Keep static list; show a soft warning instead of blocking the UI
+          setError("Could not reach the backend. Using offline platform list — analysis requires the server.");
+        }
       });
     return () => {
       abort.abort();
       controller.current?.abort();
     };
   }, [reload]);
+
   function choose(next: File | undefined) {
     setReport(null);
     setError("");
@@ -62,6 +210,7 @@ export const DemoPage: React.FC = () => {
     }
     setFile(next);
   }
+
   async function analyze(event: React.FormEvent) {
     event.preventDefault();
     if (!file || !platformId || busy) return;
@@ -99,17 +248,14 @@ export const DemoPage: React.FC = () => {
       setBusy(false);
     }
   }
+
   function reset() {
     setReport(null);
     setFile(null);
     setError("");
     if (input.current) input.current.value = "";
   }
-  const filtered = platforms.filter(
-    (p) =>
-      p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.id === platformId,
-  );
+
   return (
     <div className="demo-shell">
       <header className="demo-header">
@@ -129,6 +275,7 @@ export const DemoPage: React.FC = () => {
               Upload a supported file and select where you plan to share it.
             </p>
             <form onSubmit={analyze} className="analysis-form">
+              {/* Section 01: Upload */}
               <section>
                 <h2>
                   <span>01</span> Upload a file
@@ -174,22 +321,14 @@ export const DemoPage: React.FC = () => {
                   <FileText size={14} /> Use synthetic sample text
                 </button>
               </section>
+
+              {/* Section 02: Platform */}
               <section>
                 <h2>
                   <span>02</span> Where will you share it?
                 </h2>
-                <label htmlFor="platform-search" className="field-label">
-                  Search platforms
-                </label>
-                <input
-                  id="platform-search"
-                  placeholder="Search by name…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  disabled={busy}
-                />
                 <label htmlFor="platform" className="field-label">
-                  Selected platform
+                  Choose a platform
                 </label>
                 <select
                   id="platform"
@@ -197,8 +336,8 @@ export const DemoPage: React.FC = () => {
                   disabled={busy}
                   onChange={(e) => setPlatformId(e.target.value)}
                 >
-                  <option value="">Choose a platform</option>
-                  {filtered.map((p) => (
+                  <option value="">Select a platform…</option>
+                  {platforms.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.name}
                       {!p.lastVerifiedAt ? " — policy not indexed" : ""}
@@ -210,6 +349,8 @@ export const DemoPage: React.FC = () => {
                   the selected platform.
                 </p>
               </section>
+
+              {/* Privacy note — spans both columns */}
               <div className="privacy-note">
                 <strong>How your file is handled</strong>
                 <p>
@@ -219,6 +360,7 @@ export const DemoPage: React.FC = () => {
                   cleared or reloaded.
                 </p>
               </div>
+
               <button
                 className="primary-button"
                 disabled={!file || !platformId || busy}

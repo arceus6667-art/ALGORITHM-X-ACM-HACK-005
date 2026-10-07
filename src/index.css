@@ -49,7 +49,7 @@ button:disabled {
   opacity: 0.45;
 }
 .demo-header {
-  height: 68px;
+  height: 56px;
   border-bottom: 1px solid #e8e8e6;
   display: flex;
   align-items: center;
@@ -60,7 +60,7 @@ button:disabled {
 .demo-container {
   max-width: 1100px;
   margin: auto;
-  padding: 44px 24px 64px;
+  padding: clamp(20px, 3vh, 36px) 24px clamp(32px, 4vh, 56px);
 }
 .eyebrow {
   font-family: ui-monospace, monospace;
@@ -70,27 +70,27 @@ button:disabled {
   margin-bottom: 12px;
 }
 .demo-container h1 {
-  font-size: clamp(36px, 4vw, 48px);
+  font-size: clamp(28px, 3.5vw, 40px);
   letter-spacing: -0.035em;
   line-height: 1.08;
   font-weight: 550;
-  margin: 0 0 16px;
+  margin: 0 0 10px;
 }
 .intro {
   color: #606060;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.6;
-  margin-bottom: 30px;
+  margin-bottom: 20px;
 }
 .analysis-form {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 28px 36px;
+  gap: 20px 32px;
 }
 .demo-container h2 {
-  font-size: 19px;
+  font-size: 17px;
   font-weight: 550;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
   letter-spacing: -0.02em;
 }
 .analysis-form h2 span {
@@ -105,11 +105,11 @@ button:disabled {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 12px;
+  gap: 10px;
   border: 1px dashed #aaa;
   border-radius: 6px;
-  min-height: 200px;
-  padding: 24px;
+  min-height: clamp(140px, 18vh, 200px);
+  padding: 20px;
   text-align: center;
   background: #fafafa;
   overflow: hidden;
@@ -149,7 +149,7 @@ button:disabled {
   display: block;
   font-size: 12px;
   color: #666;
-  margin: 14px 0 7px;
+  margin: 0 0 7px;
 }
 .analysis-form input:not([type="file"]),
 .analysis-form select {
@@ -171,7 +171,7 @@ button:disabled {
 .privacy-note {
   grid-column: 1/-1;
   border-top: 1px solid #e8e8e6;
-  padding-top: 20px;
+  padding-top: 14px;
   font-size: 13px;
   color: #606060;
   line-height: 1.6;
@@ -179,7 +179,7 @@ button:disabled {
 .privacy-note strong {
   color: #111;
   display: block;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-weight: 500;
 }
 .primary-button,
@@ -331,13 +331,22 @@ button:disabled {
   gap: 16px;
   margin-top: 30px;
 }
+@media (max-width: 900px) {
+  .analysis-form {
+    grid-template-columns: 1fr;
+    gap: 18px;
+  }
+  .analysis-form > .primary-button {
+    width: 100%;
+  }
+}
 @media (max-width: 700px) {
   .demo-container {
-    padding: 30px 20px 48px;
+    padding: 20px 16px 40px;
   }
   .analysis-form {
     grid-template-columns: 1fr;
-    gap: 22px;
+    gap: 18px;
   }
   .analysis-form > .primary-button {
     width: 100%;
@@ -363,7 +372,7 @@ button:disabled {
     flex-direction: column;
   }
   .demo-header {
-    padding: 0 20px;
+    padding: 0 16px;
   }
   .demo-header a {
     font-size: 12px;
