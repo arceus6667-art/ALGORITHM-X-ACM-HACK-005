@@ -37,8 +37,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
-      - run: node --test desktop/test/server.test.mjs
       - run: node scripts/package-desktop.mjs --prepare
+      - run: node --test desktop/test/server.test.mjs
       - name: Select edition
         shell: bash
         run: node -e "require('fs').writeFileSync('desktop/edition.json', JSON.stringify({edition:'${{ matrix.edition }}',license:'Unsigned hackathon evaluation'}))"
