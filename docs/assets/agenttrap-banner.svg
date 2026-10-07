@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="420" viewBox="0 0 1280 420" role="img" aria-labelledby="title desc">
+<title id="title">AgentTrap AI — Privacy. Provenance. Control.</title><desc id="desc">Navy and cyan branding for the AgentTrap AI governance platform.</desc>
+<defs><linearGradient id="bg" x2="1" y2="1"><stop stop-color="#041429"/><stop offset="1" stop-color="#0c2944"/></linearGradient><linearGradient id="cyan" x2="1" y2="1"><stop stop-color="#6bf1ec"/><stop offset="1" stop-color="#0896ad"/></linearGradient><pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path d="M40 0H0V40" fill="none" stroke="#8fd8e8" stroke-opacity=".055"/></pattern></defs>
+<rect width="1280" height="420" rx="24" fill="url(#bg)"/><rect width="1280" height="420" rx="24" fill="url(#grid)"/>
+<circle cx="1110" cy="210" r="168" fill="none" stroke="#35c9d7" stroke-opacity=".12"/><circle cx="1110" cy="210" r="135" fill="none" stroke="#35c9d7" stroke-opacity=".18"/>
+<path d="M1110 91l89 35v84c0 62-39 108-89 128-50-20-89-66-89-128v-84z" fill="#123c55" stroke="#48d7df" stroke-width="2"/>
+<path d="M1070 211l27 27 54-61" fill="none" stroke="url(#cyan)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+<rect x="60" y="52" width="63" height="63" rx="15" fill="url(#cyan)"/><text x="91" y="96" text-anchor="middle" fill="#041429" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="43">A</text>
+<text x="145" y="79" fill="#76e8eb" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="14" letter-spacing="3">AI GOVERNANCE PLATFORM</text>
+<text x="60" y="205" fill="#f1f7ff" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="76">AgentTrap <tspan fill="#57dce5">AI</tspan></text>
+<text x="64" y="256" fill="#afc6df" font-family="Arial,Helvetica,sans-serif" font-size="25">Know what you share. Decide what is allowed.</text>
+<path d="M64 294h820" stroke="#32516a"/>
+<text x="64" y="337" fill="#78e5e8" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="15" letter-spacing="3">PRIVACY / PROVENANCE / CONTROL</text>
+<text x="64" y="373" fill="#8da8c4" font-family="Arial,Helvetica,sans-serif" font-size="15">Desktop CRM · TraceSeal fingerprints · Deterministic policies · Consented browser monitoring</text>
+</svg>
