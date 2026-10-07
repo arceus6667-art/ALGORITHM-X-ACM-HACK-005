@@ -49,11 +49,11 @@ jobs:
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: 'false'
           AGENTTRAP_EDITION: ${{ matrix.edition }}
-        run: npx electron-builder --${{ matrix.os == 'windows-latest' && 'win' || matrix.os == 'macos-latest' && 'mac' || 'linux' }} --${{ matrix.arch }} --publish never
+        run: npx electron-builder --${{ matrix.os == 'windows-latest' && 'win' || matrix.os == 'macos-latest' && 'mac' || 'linux' }} --${{ matrix.arch }} --publish never --config.appId=ai.agenttrap.crm.${{ matrix.edition }} --config.productName="AgentTrap CRM ${{ matrix.edition }}"
       - name: Publish native packages
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           VERSION=$(node -p "require('./desktop/package.json').version")
-          gh release upload "desktop-v$VERSION" desktop/release/*.${{ matrix.os == 'ubuntu-latest' && 'tar.gz' || 'zip' }} --clobber
+          gh release upload "desktop-v$VERSION" desktop/release/*.${{ matrix.os == 'windows-latest' && 'exe' || matrix.os == 'ubuntu-latest' && 'tar.gz' || 'zip' }} --clobber
