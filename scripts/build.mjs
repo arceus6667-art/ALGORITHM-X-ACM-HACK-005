@@ -1,0 +1,6 @@
+import fs from 'node:fs/promises';import path from 'node:path';
+import {build} from 'esbuild';
+await build({entryPoints:['client/auth.js'],bundle:true,minify:true,format:'iife',platform:'browser',target:'es2022',outfile:'web/auth-bundle.js'});
+const types={'.html':'text/html; charset=utf-8','.css':'text/css; charset=utf-8','.js':'text/javascript; charset=utf-8','.svg':'image/svg+xml','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp'};
+const assets={};for(const name of await fs.readdir('web')){const ext=path.extname(name);if(!types[ext])continue;const base64=['.png','.jpg','.webp'].includes(ext);assets['/'+name]={type:types[ext],base64,body:await fs.readFile('web/'+name,base64?'base64':'utf8')};}
+await fs.rm('dist',{recursive:true,force:true});await fs.mkdir('dist/server',{recursive:true});await fs.mkdir('dist/.openai',{recursive:true});await fs.writeFile('dist/server/index.js','const STATIC_ASSETS='+JSON.stringify(assets)+';\n'+await fs.readFile('worker/index.js','utf8'));await fs.copyFile('.openai/hosting.json','dist/.openai/hosting.json');await fs.cp('drizzle','dist/.openai/drizzle',{recursive:true});console.log('Built Worker, embedded website assets, authentication-aware trial API, and migrations.');

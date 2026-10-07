@@ -1,0 +1,40 @@
+const TERMS_VERSION='2026-10-07-v2';
+const COOKIE='__Host-agenttrap-guest';
+function json(data,status=200,headers={}){return new Response(JSON.stringify(data),{status,headers:{'content-type':'application/json; charset=utf-8','cache-control':'no-store',...commonHeaders(),...headers}});}
+async function supabase(env,path,token,options={}){if(!env.SUPABASE_URL||!env.SUPABASE_PUBLISHABLE_KEY)throw new Error('Account storage is not configured.');return fetch(env.SUPABASE_URL+path,{...options,headers:{apikey:env.SUPABASE_PUBLISHABLE_KEY,...(token?{Authorization:'Bearer '+token}:{}),...options.headers},signal:AbortSignal.timeout(15000)});}
+async function identity(request,env){const header=request.headers.get('authorization');if(!header)return null;if(!/^Bearer \S+$/.test(header))throw new Error('Invalid sign-in session.');const token=header.slice(7);const r=await supabase(env,'/auth/v1/user',token);if(!r.ok)throw new Error('Your sign-in session has expired. Sign in again.');const user=await r.json();if(!user.id||(!user.email_confirmed_at&&!user.phone_confirmed_at))throw new Error('Verify your email or phone before continuing.');return{subject:'supabase:'+user.id,userId:user.id,token,mode:'signed',signedIn:true};}
+function guest(request){const pair=(request.headers.get('cookie')||'').split(';').map(s=>s.trim()).find(s=>s.startsWith(COOKIE+'='));const value=pair?.slice(COOKIE.length+1);return value&&/^[a-f0-9-]{36}$/.test(value)?value:null;}
+async function trialContext(request,env,user){if(!env.DB)throw new Error('Trial database unavailable');const guestId=guest(request)||crypto.randomUUID();const info=user||{subject:'guest:'+guestId,mode:'guest',signedIn:false};const db=env.DB.withSession?env.DB.withSession('first-primary'):env.DB;const trial=await db.prepare('SELECT subject, mode, started_at, expires_at, terms_version FROM demo_trials WHERE subject = ?').bind(info.subject).first();return{...info,db,trial,cookie:user?null:`${COOKIE}=${guestId}; Path=/; Max-Age=31536000; HttpOnly; Secure; SameSite=Lax`};}
+function publicTrial(context,now=Date.now()){return{signedIn:context.signedIn,mode:context.mode,durationSeconds:context.signedIn?1800:300,started:!!context.trial,startedAt:context.trial?.started_at||null,expiresAt:context.trial?.expires_at||null,serverNow:now,active:!!context.trial&&context.trial.expires_at>now,expired:!!context.trial&&context.trial.expires_at<=now,termsVersion:TERMS_VERSION,signInUrl:'/signin.html'};}
+function commonHeaders(){return{'x-content-type-options':'nosniff','referrer-policy':'strict-origin-when-cross-origin','permissions-policy':'camera=(), microphone=(), geolocation=()'};}
+export default{async fetch(request,env){const url=new URL(request.url),path=url.pathname;
+ if(path==='/api/auth/config'&&request.method==='GET'){try{const r=await supabase(env,'/auth/v1/settings');const settings=r.ok?await r.json():{};return json({url:env.SUPABASE_URL,publishableKey:env.SUPABASE_PUBLISHABLE_KEY,providers:settings.external||{}});}catch{return json({error:'Sign-in is temporarily unavailable.'},503);}}
+ if(path.startsWith('/api/trial/')||path==='/api/workspace'){
+ if(!['GET','POST'].includes(request.method))return json({error:'Method not allowed'},405);
+ if(request.method==='POST'&&request.headers.get('origin')!==url.origin)return json({error:'This action must start from the AgentTrap website.'},403);
+ let user;try{user=await identity(request,env);}catch(error){return json({error:error.message},401);}
+ try{const ctx=await trialContext(request,env,user);const headers=ctx.cookie?{'set-cookie':ctx.cookie}:{};
+ if(path==='/api/trial/status'&&request.method==='GET')return json(publicTrial(ctx),200,headers);
+ if(path==='/api/trial/start'&&request.method==='POST'){const body=await request.json().catch(()=>null);if(body?.termsVersion!==TERMS_VERSION||body?.accepted!==true)return json({error:'Acknowledge the demo terms before starting.'},400,headers);const now=Date.now();await ctx.db.prepare('INSERT OR IGNORE INTO demo_trials (subject, mode, started_at, expires_at, terms_version) VALUES (?, ?, ?, ?, ?)').bind(ctx.subject,ctx.mode,now,now+(ctx.signedIn?1800:300)*1000,TERMS_VERSION).run();ctx.trial=await ctx.db.prepare('SELECT subject, mode, started_at, expires_at, terms_version FROM demo_trials WHERE subject = ?').bind(ctx.subject).first();return json(publicTrial(ctx),200,headers);}
+ if(path==='/api/trial/authorize'&&request.method==='POST'){const trial=publicTrial(ctx);if(!trial.active)return json({...trial,error:trial.expired?'Your trial has ended.':'Start your demo trial first.'},trial.expired?402:403,headers);return json(trial,200,headers);}
+ if(path==='/api/workspace'){
+ if(!user)return json({error:'Sign in to save your CRM workspace.'},401);
+ if(request.method==='GET'){
+ const r=await supabase(env,'/rest/v1/rpc/load_agenttrap_workspace',user.token,{method:'POST',headers:{'content-type':'application/json'},body:'{}'});if(!r.ok)throw new Error('Could not load your saved workspace.');return json(await r.json());
+ }
+ if(!publicTrial(ctx).active)return json({error:'Start an active trial before saving new changes.'},403);
+ const raw=await request.text();if(raw.length>1500000)return json({error:'Workspace exceeds the save limit. Export your records.'},413);
+ let body;try{body=JSON.parse(raw);}catch{return json({error:'Invalid workspace.'},400);}
+ if(!Number.isInteger(body.revision)||!['assets','policies','approvals','events'].every(k=>Array.isArray(body[k]))||!body.settings)return json({error:'Invalid workspace.'},400);
+ const {threshold,minimum,version}=body.settings;if(!Number.isInteger(threshold)||threshold<25||threshold>100||!Number.isInteger(minimum)||minimum<0||minimum>100||!Number.isInteger(version)||version<1)return json({error:'Invalid policy boundaries.'},400);
+ // Store metadata only. File bytes and extracted text are never part of this contract.
+ const pick=(v,keys)=>Object.fromEntries(keys.filter(k=>k in v).map(k=>[k,v[k]]));
+ const assetKeys=['id','name','hash','version','parentHash','parentId','source','classification','provenance','platform','purpose','role','timestamp','policyVersion','result'];
+ const policyKeys=['id','name','classification','purpose','destination','role','action','priority','enabled'];
+ const eventKeys=['timestamp','type','previousDigest','digest','assetId','action','assetHash','policyVersion','policySnapshot','settings','result','candidateHash','originalHash','exactMatch','policyId','policy','enabled','reviewId','reason','reviewer','originalDecision'];
+ const payload={expected_revision:body.revision,settings:{threshold,minimum,version},assets:body.assets.map(a=>pick(a,assetKeys)),policies:body.policies.map(p=>pick(p,policyKeys)),approvals:body.approvals.map(a=>({...pick(a,['id','status','reason','reviewedAt']),asset:pick(a.asset,assetKeys)})),events:body.events.map(e=>pick(e,eventKeys))};
+ const r=await supabase(env,'/rest/v1/rpc/save_agenttrap_workspace',user.token,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload)});const data=await r.json();if(!r.ok)return json({error:data.code==='40001'?'Workspace changed in another tab. Export your changes and reload.':'Your changes could not be saved. Export the evidence and try again.'},data.code==='40001'?409:400);return json({revision:data,saved:true});
+ }
+ return json({error:'Not found'},404,headers);
+ }catch(err){console.error('AgentTrap service failure:',err.message);return json({error:'The workspace service is temporarily unavailable. Export your local evidence before leaving.'},503);}}
+ const assetPath=path==='/'?'/index.html':path;const asset=STATIC_ASSETS[assetPath];if(!asset)return new Response('Not found',{status:404,headers:commonHeaders()});if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});const headers={...commonHeaders(),'content-type':asset.type,'cache-control':asset.type.includes('html')?'no-store':'public, max-age=300'};return new Response(request.method==='HEAD'?null:asset.base64?Uint8Array.from(atob(asset.body),c=>c.charCodeAt(0)):asset.body,{headers});}};
