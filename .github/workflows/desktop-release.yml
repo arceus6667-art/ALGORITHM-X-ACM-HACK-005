@@ -1,0 +1,59 @@
+name: Build desktop CRM downloads
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', 'extension/**', 'scripts/package-desktop.mjs', '.github/workflows/desktop-release.yml', 'web/app.js', 'web/style.css', 'web/demo.html']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepare-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prepare evaluation release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./desktop/package.json').version")
+          RELEASE_TAG="desktop-v$VERSION"
+          gh release view "$RELEASE_TAG" >/dev/null 2>&1 || gh release create "$RELEASE_TAG" --target "$GITHUB_SHA" --title "AgentTrap CRM Hackathon $VERSION" --notes "Unsigned hackathon evaluation builds. See desktop/README.md for capabilities, privacy and platform requirements. Assets appear as each platform finishes building. No commercial billing or downstream provider tracing."
+  build:
+    needs: prepare-release
+    permissions:
+      contents: write
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        arch: [x64, arm64]
+        edition: [trial, full]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+      - run: node --test desktop/test/server.test.mjs
+      - run: node scripts/package-desktop.mjs --prepare
+      - name: Select edition
+        shell: bash
+        run: node -e "require('fs').writeFileSync('desktop/edition.json', JSON.stringify({edition:'${{ matrix.edition }}',license:'Unsigned hackathon evaluation'}))"
+      - run: npm ci --prefix desktop
+      - name: Package native application
+        working-directory: desktop
+        shell: bash
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+          AGENTTRAP_EDITION: ${{ matrix.edition }}
+        run: npx electron-builder --${{ matrix.os == 'windows-latest' && 'win' || matrix.os == 'macos-latest' && 'mac' || 'linux' }} --${{ matrix.arch }} --publish never
+      - name: Publish native packages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          VERSION=$(node -p "require('./desktop/package.json').version")
+          gh release upload "desktop-v$VERSION" desktop/release/*.${{ matrix.os == 'ubuntu-latest' && 'tar.gz' || 'zip' }} --clobber

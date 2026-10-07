@@ -1,0 +1,17 @@
+const endpoint='http://127.0.0.1:43127';
+chrome.storage.local.setAccessLevel({accessLevel:'TRUSTED_CONTEXTS'});
+async function request(path,body,token){const r=await fetch(endpoint+path,{method:'POST',headers:{'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},body:JSON.stringify(body)});const data=await r.json();if(!r.ok)throw Error(data.error||'CRM rejected this request');return data;}
+async function configureScripts(hosts){const previous=await chrome.scripting.getRegisteredContentScripts();if(previous.length)await chrome.scripting.unregisterContentScripts({ids:previous.map(x=>x.id)});if(hosts.length){await chrome.scripting.registerContentScripts([{id:'agenttrap-observer',matches:hosts.map(h=>'https://'+h+'/*'),js:['content.js'],runAt:'document_idle',persistAcrossSessions:true}]);const tabs=await chrome.tabs.query({url:hosts.map(h=>'https://'+h+'/*')});for(const tab of tabs)chrome.scripting.executeScript({target:{tabId:tab.id},files:['content.js']}).catch(()=>{});}}
+async function capture(data,senderUrl){const settings=await chrome.storage.local.get(['enabled','hosts','internal','token']);const u=new URL(senderUrl);if(!settings.enabled||!settings.token||u.protocol!=='https:'||!settings.hosts?.includes(u.hostname)||!await chrome.permissions.contains({origins:['https://'+u.hostname+'/*']}))return;const event={...data,host:u.hostname,provider:u.hostname===settings.internal?'internal:'+u.hostname:u.hostname};await request('/bridge/event',event,settings.token);}
+chrome.runtime.onMessage.addListener((message,sender,respond)=>{
+ (async()=>{
+ if(message.action==='event'){if(!sender.tab||sender.id!==chrome.runtime.id)throw Error('Untrusted sender');await capture(message.event,sender.url);return {ok:true};}
+ if(sender.url!==chrome.runtime.getURL('popup.html'))throw Error('Open the companion popup to configure pairing.');
+ if(message.action==='pair'){const data=await request('/bridge/pair',{code:message.code});await chrome.storage.local.set({token:data.token});return{ok:true};}
+ if(message.action==='enable'){const data=await chrome.storage.local.get('token');if(!data.token)throw Error('Pair with your CRM first.');const hosts=message.hosts;if(!Array.isArray(hosts)||hosts.length>10||hosts.some(h=>!/^[a-z0-9.-]+$/.test(h)))throw Error('Invalid approved websites');await chrome.storage.local.set({hosts,internal:message.internal||null,enabled:true});await configureScripts(hosts);return{ok:true};}
+ if(message.action==='pause'){const {hosts}=await chrome.storage.local.get('hosts');await chrome.storage.local.set({enabled:false});await configureScripts([]);if(hosts?.length)await chrome.permissions.remove({origins:hosts.map(h=>'https://'+h+'/*')});return{ok:true};}
+ throw Error('Unknown action');
+ })().then(respond).catch(error=>respond({ok:false,error:error.message}));return true;
+});
+chrome.webRequest.onBeforeRequest.addListener(details=>{if(details.method==='POST')capture({kind:'network_request',characters:0,signals:[]},details.url).catch(()=>{});},{urls:['https://*/*']});
+chrome.permissions.onRemoved.addListener(async()=>{const data=await chrome.storage.local.get('hosts');const permitted=[];for(const host of data.hosts||[])if(await chrome.permissions.contains({origins:['https://'+host+'/*']}))permitted.push(host);await chrome.storage.local.set({hosts:permitted,enabled:permitted.length>0});await configureScripts(permitted);});

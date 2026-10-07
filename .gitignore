@@ -2,3 +2,8 @@ node_modules/
 .sites-runtime/
 dist/
 .env
+
+desktop/ui/
+desktop/release/
+web/downloads/
+web/downloads-manifest.json

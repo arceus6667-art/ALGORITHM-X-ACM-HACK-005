@@ -1,0 +1,11 @@
+(()=>{if(window.__agenttrapObserver)return;window.__agenttrapObserver=true;let last='',lastTime=0;
+const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
+const signals=text=>[...(/(?:api[_ -]?key|password|secret|token)\s*[:=]\s*\S{6,}|sk-[a-z0-9_-]{12,}/i.test(text)?['Credential pattern']:[]),...(/ignore (?:all |previous |the )*instructions|bypass (?:the )?(?:policy|safeguards)/i.test(text)?['Prompt manipulation signal']:[]),...(/[\w.+-]+@[\w.-]+\.[a-z]{2,}/i.test(text)?['Email address']:[])];
+const send=event=>chrome.runtime.sendMessage({action:'event',event}).catch(()=>{});
+async function prompt(element){if(!element||element.type==='password'||element.type==='email')return;const text=(element.value||element.innerText||'').trim();if(!text||text.length>1000000)return;const fingerprint=await hash(new TextEncoder().encode(text));if(last===fingerprint&&Date.now()-lastTime<1500)return;last=fingerprint;lastTime=Date.now();send({kind:'prompt_submit_intent',characters:text.length,fingerprint,signals:signals(text)});}
+document.addEventListener('submit',e=>prompt(e.target.querySelector('textarea,[contenteditable=true],[role=textbox]')),true);
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing&&e.target.matches('textarea,[contenteditable=true],[role=textbox]'))prompt(e.target);},true);
+document.addEventListener('click',e=>{if(e.target.closest('button[type=submit],button[data-testid*=send],button[aria-label*=Send]'))prompt(document.querySelector('textarea:focus,[contenteditable=true]:focus')||document.querySelector('textarea,[contenteditable=true][role=textbox],#prompt-textarea'));},true);
+document.addEventListener('change',async e=>{if(e.target.type!=='file')return;for(const file of e.target.files||[]){if(file.size>10*1024*1024)continue;send({kind:'file_selected',fileName:file.name,fileSize:file.size,fingerprint:await hash(await file.arrayBuffer()),signals:[]});}},true);
+document.addEventListener('paste',async e=>{if(!e.target.matches('textarea,[contenteditable=true],[role=textbox]'))return;const text=e.clipboardData?.getData('text/plain');if(text&&text.length<=1000000)send({kind:'paste_observed',characters:text.length,fingerprint:await hash(new TextEncoder().encode(text)),signals:signals(text)});},true);
+})();
