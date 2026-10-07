@@ -1,0 +1,49 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "npm run build",
+  "outputDirectory": "web",
+  "installCommand": "npm ci",
+  "redirects": [
+    {
+      "source": "/demo.html",
+      "destination": "https://agenttrap-ai-governance.arceus6667.chatgpt.site/demo.html",
+      "permanent": false
+    },
+    {
+      "source": "/signin.html",
+      "destination": "https://agenttrap-ai-governance.arceus6667.chatgpt.site/signin.html",
+      "permanent": false
+    },
+    {
+      "source": "/enterprise.html",
+      "destination": "https://agenttrap-ai-governance.arceus6667.chatgpt.site/enterprise.html",
+      "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/api/downloads/releases",
+      "destination": "https://agenttrap-ai-governance.arceus6667.chatgpt.site/api/downloads/releases"
+    },
+    {
+      "source": "/downloads/:path*",
+      "destination": "https://agenttrap-ai-governance.arceus6667.chatgpt.site/downloads/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        }
+      ]
+    }
+  ]
+}
