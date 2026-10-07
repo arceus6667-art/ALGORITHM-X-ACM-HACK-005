@@ -19,11 +19,7 @@ Create a Google OAuth web application in Google Cloud, configure the consent scr
 
 Enable Google and save. Use the live site's Continue with Google button to verify the complete consent and callback flow. Configure the Google consent application for your intended audience; a test-mode application only permits configured test users.
 
-## 3. Activate phone OTP
-
-In Supabase Auth Providers, enable Phone and configure a supported SMS provider such as Twilio. Enter SMS credentials directly in Supabase, then test delivery to a real phone number in international format. Delivery may depend on provider verification, sender registration and destination-country requirements. Leave phone auto-confirm disabled.
-
-## 4. Configure email OTP
+## 3. Configure email OTP
 
 Open https://supabase.com/dashboard/project/ndtlhzrkonordpntyphe/auth/templates
 
@@ -43,7 +39,7 @@ Supabase's default email service has restricted recipients and delivery limits. 
 
 ## Verification and boundaries
 
-The Google and Phone providers were disabled when this integration was built. No OAuth client secret or SMS credentials were supplied, so these providers have not been activated or tested with real accounts. No verification emails or SMS messages were sent during development.
+Phone sign-in has been removed from the website. Google and email use Supabase authentication. Real provider delivery and consent must be verified with the configured accounts.
 
 The database save/load, row isolation, cross-account write rejection, revision conflict and append-only audit permissions were verified against the real Supabase database with rollback-only synthetic accounts. Browser workflows and API expiry were tested with simulated authentication. Complete real provider sign-in testing after activation.
 
