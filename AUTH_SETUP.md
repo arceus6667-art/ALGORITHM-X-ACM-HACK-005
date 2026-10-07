@@ -19,30 +19,18 @@ Create a Google OAuth web application in Google Cloud, configure the consent scr
 
 Enable Google and save. Use the live site's Continue with Google button to verify the complete consent and callback flow. Configure the Google consent application for your intended audience; a test-mode application only permits configured test users.
 
-## 3. Configure email OTP
+## 3. Configure email magic links
 
-Open https://supabase.com/dashboard/project/ndtlhzrkonordpntyphe/auth/templates
-
-Edit the Magic Link email template to include the verification code:
+Configure valid custom SMTP credentials in Supabase. Keep email confirmation enabled. Use standard Confirm signup and Magic Link templates:
 
 ```html
-<h2>Your AgentTrap sign-in code</h2>
-<p>Enter this code in the AgentTrap sign-in page:</p>
-<p><strong>{{ .Token }}</strong></p>
-<p>If you did not request this code, ignore this email.</p>
+<h2>Sign in to AgentTrap AI</h2>
+<p><a href="{{ .ConfirmationURL }}">Continue to AgentTrap</a></p>
+<p>If you did not request this email, ignore it.</p>
 ```
 
-Supabase sends a magic link by default. Including `{{ .Token }}` enables the code-entry experience already implemented on the website. The website also supports following an email sign-in link when supplied.
+Add these redirect entries in Authentication → URL Configuration:
+- `https://agenttrap-ai-governance.arceus6667.chatgpt.site/signin.html`
+- `http://127.0.0.1:43127/auth/callback**`
 
-Configure custom SMTP for delivery to your intended users: https://supabase.com/dashboard/project/ndtlhzrkonordpntyphe/settings/auth
-Supabase's default email service has restricted recipients and delivery limits. Keep email confirmation enabled. Test a new and returning user, incorrect and expired codes, resend cooldown, and session persistence.
-
-## Verification and boundaries
-
-Phone sign-in has been removed from the website. Google and email use Supabase authentication. Real provider delivery and consent must be verified with the configured accounts.
-
-The database save/load, row isolation, cross-account write rejection, revision conflict and append-only audit permissions were verified against the real Supabase database with rollback-only synthetic accounts. Browser workflows and API expiry were tested with simulated authentication. Complete real provider sign-in testing after activation.
-
-The guest trial lasts five minutes. A verified Supabase account has one thirty-minute trial. These timers are enforced by the website's server. Refreshing or signing back in does not restart them. Saved CRM records can be restored and exported after expiry; new demo actions require an active trial.
-
-CRM metadata persists in Supabase. Document files and pasted analysis text remain in the browser. Guest metadata is temporarily stored in this tab's session storage. Guest records are imported into a new account workspace when its signed-in trial starts; an existing saved account workspace takes precedence. The current CRM is private per account. Shared organization workspaces and organization administrator roles are future work. The analysis role selector supplies demo policy context and does not grant account permissions.
+For web login, open the email link in the browser where sign-in started. For desktop v0.3.0+, keep the CRM open and open the link on the same laptop. No OTP field is provided. PKCE keys are held in the initiating client; restarting invalidates pending desktop links. Test actual delivery and expired/reused links. Valid SMTP is still required: changing from codes to links does not fix invalid mail credentials.

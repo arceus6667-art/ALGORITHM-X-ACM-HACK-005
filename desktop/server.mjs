@@ -64,6 +64,10 @@ export async function startDesktop({dataDir,port=43127,notify=()=>{},editionOver
  e.digest=hash(canonical(e));db.activity.push(e);await persist();if(requireAccount){try{await account.rpc('record',recordPayload(e));db.syncedIds||=[];db.syncedIds.push(e.id);await persist();}catch{throw Error('Cloud audit unavailable. Submission held until records can be saved.');}}return e;
  });if(event.severity==='HIGH'){notify();if(phone)phoneAlert().then(result=>{if(!result.delivered)console.warn(result.error);});}return send({recorded:true,id:event.id,allowed:decision!=='BLOCK',decision,risk,threshold:company.threshold});
  }
+ if(p==='/auth/callback'&&req.method==='GET'){
+  try{await mutate(async()=>{const state=await account.completeLink(url.searchParams.get('code'),url.searchParams.get('state'));await loadUser(state.userId);});res.writeHead(200,{...headers,'Content-Type':'text/html; charset=utf-8'});res.end('<!doctype html><title>AgentTrap signed in</title><h1>Signed in successfully</h1><p>Return to your AgentTrap desktop application. You may close this tab.</p>');}
+  catch{res.writeHead(400,{...headers,'Content-Type':'text/html; charset=utf-8'});res.end('<!doctype html><title>Sign-in unsuccessful</title><h1>Link could not complete sign-in</h1><p>Keep the CRM open and request a new link. Open it on this same laptop. Check the Supabase redirect URL settings if it opens the website instead.</p>');}return;
+ }
  if(p.startsWith('/api/')){
  if(req.headers.origin&&req.headers.origin!==origin)return send({error:'Untrusted origin'},403);
  if(!equal(req.headers['x-desktop-token']||'',token))return send({error:'Local session required'},401);
@@ -71,8 +75,8 @@ export async function startDesktop({dataDir,port=43127,notify=()=>{},editionOver
  if(p.startsWith('/api/desktop/account/')){
  const action=p.slice('/api/desktop/account/'.length);const b=req.method==='POST'?await read(req):{};
  if(action==='state')return send(await account.state());
- if(action==='otp'&&req.method==='POST')return send(await account.otp(b.email,b.register));
- if(action==='verify'&&req.method==='POST')return await mutate(async()=>{const state=await account.verify(b.email,b.code,b.name);await loadUser(state.userId);return send(state);});
+ if(action==='magic-link'&&req.method==='POST')return send(await account.magicLink(b.email,b.register,b.name,origin));
+ 
  if(action==='logout'&&req.method==='POST')return await mutate(async()=>{await account.logout();extensionToken=null;extensionId=null;pairCode=null;phone=null;previewConsent=false;return send({signedOut:true});});
  if(action==='rpc'&&req.method==='POST')return send(await account.rpc(b.action,b.payload));
  if(action==='select'&&req.method==='POST')return await mutate(async()=>{const result=await account.select(b.companyId);extensionToken=null;extensionId=null;db.monitoring=false;await persist();return send(result);});

@@ -15,9 +15,9 @@ window.AgentTrapAuth=auth;
 const page=document.getElementById('auth-page');
 if(page){(async()=>{
  let address='',cooldown=0,busy=false;
- const status=document.getElementById('auth-status'),send=document.getElementById('send-code'),verify=document.getElementById('verify-code'),input=document.getElementById('auth-address'),google=document.getElementById('google-signin');
+ const status=document.getElementById('auth-status'),send=document.getElementById('send-code'),input=document.getElementById('auth-address'),google=document.getElementById('google-signin');
  const message=(text,error=false)=>{status.textContent=text;status.classList.toggle('error',error);};
- function paint(){send.disabled=busy||cooldown>Date.now();send.textContent=busy?'Please wait…':cooldown>Date.now()?'Resend in '+Math.ceil((cooldown-Date.now())/1000)+'s':'Send verification';}
+ function paint(){send.disabled=busy||cooldown>Date.now();send.textContent=busy?'Please wait…':cooldown>Date.now()?'Resend in '+Math.ceil((cooldown-Date.now())/1000)+'s':'Send magic link';}
  const finish=()=>{message('Verified. Opening your workspace…');location.replace('/demo.html?welcome=1#dashboard');};
  await auth.ready;
  if(auth.error){message(auth.error,true);send.disabled=true;google.disabled=true;}else{
@@ -26,8 +26,7 @@ if(page){(async()=>{
  if(external.google===false)document.getElementById('google-note').textContent='Google sign-in is awaiting activation by the administrator.';
  google.addEventListener('click',async()=>{if(external.google===false){message('Google sign-in has not been activated for this workspace yet.',true);return;}google.disabled=true;try{const {error}=await auth.client.auth.signInWithOAuth({provider:'google',options:{redirectTo:location.origin+'/signin.html'}});if(error)throw error;}catch(e){message(e.message,true);google.disabled=false;}});
  document.getElementById('send-form').addEventListener('submit',async e=>{e.preventDefault();if(busy||cooldown>Date.now())return;address=input.value.trim();
- busy=true;paint();try{const payload={email:address,options:{emailRedirectTo:location.origin+'/signin.html'}};const {error}=await auth.client.auth.signInWithOtp(payload);if(error)throw error;cooldown=Date.now()+60000;document.getElementById('code-form').hidden=false;message('Check your email. Enter the verification code if provided, or follow the sign-in link.');document.getElementById('auth-code').focus();}catch(e){message(e.message,true);}finally{busy=false;paint();}});
- document.getElementById('code-form').addEventListener('submit',async e=>{e.preventDefault();if(busy)return;busy=true;verify.disabled=true;try{const token=document.getElementById('auth-code').value.trim();const payload={email:address,token,type:'email'};const {data,error}=await auth.client.auth.verifyOtp(payload);if(error)throw error;if(!data.session)throw new Error('Verification did not create a session. Request a new code.');finish();}catch(e){message(e.message,true);}finally{busy=false;verify.disabled=false;}});
+ busy=true;paint();try{const payload={email:address,options:{emailRedirectTo:location.origin+'/signin.html'}};const {error}=await auth.client.auth.signInWithOtp(payload);if(error)throw error;cooldown=Date.now()+60000;message('Check your email and click the sign-in link. Open it in this browser to continue.');}catch(e){message(e.message,true);}finally{busy=false;paint();}});
  window.addEventListener('agenttrap-auth',e=>{if(e.detail.signedIn)finish();});setInterval(paint,1000);
  }
 })();}

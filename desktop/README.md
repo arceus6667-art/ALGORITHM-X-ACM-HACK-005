@@ -4,7 +4,7 @@ Two downloadable editions: Desktop Trial (5 analyses, 3 integrity checks, 2 fixe
 
 ## Registration and company access
 
-Both editions require real email verification. On first launch choose Register, enter your full name and company email, request an OTP and enter the real emailed code. Then create your company workspace or accept the one-time invitation from your administrator. Returning users choose Sign in and verify their email. Sessions stay in memory and require sign-in after restarting. Internet access is required. The operator must configure custom SMTP and an OTP email template; see docs/enterprise-activation.md in the repository. There are no demo passwords or fixed codes.
+Both editions require real email verification. On first launch choose Register, enter your full name and company email, request a magic link and open it on the same laptop while the CRM stays open. Then create your company workspace or accept the one-time invitation from your administrator. Returning users choose Sign in and verify their email. Sessions stay in memory and require sign-in after restarting. Internet access is required. The operator must configure custom SMTP and a standard magic-link email template; see docs/enterprise-activation.md in the repository. There are no demo passwords or fixed codes.
 
 ## Windows installer
 
@@ -40,3 +40,5 @@ Credential patterns, prompt manipulation signals, or a selected file matching a 
 ## Company administration and threshold holds
 
 Company accounts supports verified profile, company creation, exact-email invitation codes, owner/admin/member roles, member revocation, shared activity records, administrative audit, evidence export and company risk boundaries. Trial limits are persisted per verified account in the server database. Company admins can enable pre-send holds at a configured threshold. Only intercepted submission controls on approved browser pages are covered; this does not provide system-wide enforcement or downstream provider tracing. New SMTP delivery and live provider-page testing must be completed by the operator. See docs/enterprise-activation.md for paid activation and production requirements.
+
+Desktop email callback: add `http://127.0.0.1:43127/auth/callback**` to Supabase Authentication → URL Configuration → Redirect URLs. The listener accepts only a single-use state and exchanges its PKCE authorization code using the verifier held in memory.

@@ -2,12 +2,12 @@
 
 ## Real email verification (operator setup required)
 
-This release uses real Supabase email OTP, not a shared or generated demo credential. No custom SMTP credentials were supplied for this project. The application cannot configure email delivery without them. Supabase's default mail service is restricted and is not suitable for company-user onboarding.
+This release uses real Supabase email magic link, not a shared or generated demo credential. No custom SMTP credentials were supplied for this project. The application cannot configure email delivery without them. Supabase's default mail service is restricted and is not suitable for company-user onboarding.
 
 1. In the existing Supabase project, open Authentication → Email / SMTP settings and configure your own SMTP host, port, sender address, username and password. Enter these secrets in Supabase, never in the repository or CRM frontend.
 2. Verify the sender/domain with your mail provider. Follow its SPF/DKIM setup instructions. Set appropriate provider and Supabase rate limits.
-3. Under Authentication → Email Templates, edit the Magic Link template to include `{{ .Token }}` so the email contains the actual OTP. The desktop flow accepts a code rather than a browser magic link. Configure a short OTP expiry (for example ten minutes) and test actual inbox delivery. Never put a fixed code in the template.
-4. Register in the new desktop release with your real company email and full name. Enter the code received in that mailbox. The application submits it to Supabase for verification; it does not compare a client-side test code.
+3. Under Authentication → Email Templates, keep standard **Confirm signup** and **Magic Link** emails with a link using `{{ .ConfirmationURL }}`. There is no numeric-code input. Test actual inbox delivery.
+4. Register with your company email and full name. Keep the CRM open, then click the latest email link on the same laptop. Add the desktop callback URL described below to Supabase's redirect allowlist.
 5. Complete Company accounts → Create workspace with your company name. A business-domain email is required. Mailbox verification does not independently prove ownership of the company/domain. Company owner can verify domain control using the DNS TXT instructions and Verify DNS domain control button in Company accounts. The authenticated verification function queries public DNS and only marks the exact owner’s company verified when the TXT value matches. This proves DNS control, not legal incorporation.
 
 Official references: https://supabase.com/docs/guides/auth/auth-smtp and https://supabase.com/docs/guides/auth/auth-email-passwordless
@@ -48,3 +48,11 @@ Notifications are generic. Device notifications and configured ntfy phone delive
 ## Sessions and production readiness
 
 Access/refresh tokens are held only in the local service's memory, never in browser JavaScript responses, local database files, exports or installers. Restart requires sign-in again. Authentication and licensed actions require internet access. Server endpoints verify Supabase sessions and database membership; company roles are not derived from user-editable auth metadata. Public tables use RLS and write operations use guarded tenant RPCs. This does not make unsigned client binaries tamper-resistant or independently attest browser observations. Native signing/notarization, real mail and provider-page testing, production billing, SSO, device attestation, a managed enforcement gateway, central alert delivery, retention controls and security review remain necessary for commercial enterprise use.
+
+## Magic-link sign-in (desktop v0.3.0+)
+
+No numeric code is entered. Keep the desktop CRM open, request a link, and open the latest email link on the same laptop. The desktop stores a PKCE verifier and single-use callback state in memory. Restarting invalidates pending requests.
+
+In Supabase Authentication → URL Configuration, retain the website sign-in redirect and add `http://127.0.0.1:43127/auth/callback**` for the default desktop listener (the trailing wildcard allows its random state query). Do not substitute the website URL into SMTP Host. Custom SMTP still needs valid provider credentials.
+
+Restore **both Confirm signup and Magic Link** email templates to standard links using `<a href="{{ .ConfirmationURL }}">Sign in to AgentTrap</a>`. Website Google sign-in remains available; email authentication uses links only. Never disable email confirmation to bypass verification.
