@@ -1,0 +1,7 @@
+{
+  "name": "AgentTrap — AI Privacy, Provenance & Runtime Governance",
+  "description": "Estimate downstream exposure risk, cryptographically trace enterprise asset provenance with TraceSeal, and govern AI interactions with bounded runtime policies.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
