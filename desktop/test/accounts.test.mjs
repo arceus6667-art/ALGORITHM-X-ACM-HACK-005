@@ -1,0 +1,21 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs/promises';import os from 'node:os';import path from 'node:path';import {startDesktop} from '../server.mjs';
+test('Verified desktop account gate, company policy preflight, redaction, license expiry and sign-out',async()=>{
+ const dir=await fs.mkdtemp(path.join(os.tmpdir(),'agenttrap-account-'));let active=true,records=[],actor='11111111-1111-4111-8111-111111111111';const org='22222222-2222-4222-8222-222222222222';
+ const transport=async(url,opt={})=>{const body=opt.body?JSON.parse(opt.body):{};const json=(d,status=200)=>new Response(JSON.stringify(d),{status,headers:{'Content-Type':'application/json'}});if(url.endsWith('/api/auth/config'))return json({url:'https://testproject.supabase.co',publishableKey:'public-test-key'});if(url.endsWith('/auth/v1/otp'))return json({});if(url.endsWith('/auth/v1/verify')){if(body.token!=='123456')return json({msg:'Invalid OTP'},400);return json({access_token:'verified-test-token',refresh_token:'test-refresh',expires_in:3600,user:{id:actor,email_confirmed_at:new Date().toISOString()}});}if(url.endsWith('/auth/v1/logout'))return json({});if(url.endsWith('/rpc/agenttrap_enterprise')){assert.equal(opt.headers.Authorization,'Bearer verified-test-token');if(body.action==='authorize'&&!active)return json({message:'License revoked'},403);if(body.action==='record'){records.push(body.payload);return json({recorded:true});}if(body.action==='authorize')return json({allowed:true});return json({userId:actor,email:'owner@company.example',profile:{full_name:'Test owner'},companies:[{id:org,name:'Test company',role:'owner',threshold:80,block_enabled:true,license:{plan:'evaluation',status:active?'active':'revoked'}}]});}throw Error('Unexpected transport URL '+url);};
+ const app=await startDesktop({dataDir:dir,port:0,editionOverride:'full',authTransport:transport});const u=new URL(app.url),token=u.hash.slice('#session='.length);const call=async(p,b,extra={})=>{const r=await fetch(u.origin+p,{method:b?'POST':'GET',headers:{'X-Desktop-Token':token,...(b?{'Content-Type':'application/json'}:{}),...extra},...(b?{body:JSON.stringify(b)}:{})});return {status:r.status,data:await r.json()};};
+ try{
+ assert.equal((await call('/api/workspace')).status,401);assert.equal((await call('/api/desktop/pair-code',{})).status,401);
+ assert.equal((await call('/api/desktop/account/otp',{email:'owner@company.example',register:true})).status,200);
+ assert.equal((await call('/api/desktop/account/verify',{email:'owner@company.example',code:'bad',name:'Test owner'})).status,400);
+ assert.equal((await call('/api/desktop/account/verify',{email:'owner@company.example',code:'123456',name:'Test owner'})).data.authenticated,true);
+ assert.equal((await call('/api/workspace')).status,200);
+ const code=(await call('/api/desktop/pair-code',{})).data.code;const origin='chrome-extension://'+'a'.repeat(32);const pair=await call('/bridge/pair',{code},{Origin:origin});const h={Origin:origin,Authorization:'Bearer '+pair.data.token};
+ await call('/api/desktop/monitoring',{enabled:true,consent:true,previewConsent:true});
+ const event={host:'chatgpt.com',provider:'chatgpt.com',kind:'prompt_submit_intent',fingerprint:'a'.repeat(64),signals:['Credential pattern'],preview:'password=real-secret email@company.example'};
+ const blocked=await call('/bridge/check',event,h);assert.equal(blocked.data.allowed,false);assert.equal(blocked.data.decision,'BLOCK');assert.equal(blocked.data.risk,95);assert.equal(records[0].companyId,org);assert.doesNotMatch(records[0].preview,/real-secret|email@/);
+ const allowed=await call('/bridge/check',{...event,signals:[],preview:'Public question'},h);assert.equal(allowed.data.allowed,true);
+ active=false;assert.equal((await call('/api/desktop/authorize',{operation:'analysis'})).status,400);assert.equal((await call('/bridge/check',event,h)).status,403);
+ active=true;await call('/api/desktop/account/logout',{});assert.equal((await call('/api/workspace')).status,401);assert.equal((await call('/bridge/check',event,h)).status,403);
+ const bytes=await fs.readFile(path.join(dir,'accounts',actor+'.json'),'utf8');assert.doesNotMatch(bytes,/verified-test-token|test-refresh|real-secret|email@/);
+ }finally{await app.close();await fs.rm(dir,{recursive:true,force:true});}
+});

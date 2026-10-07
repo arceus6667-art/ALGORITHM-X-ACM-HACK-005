@@ -1,6 +1,6 @@
 {
   "name": "agenttrap-desktop",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Local AgentTrap CRM hackathon evaluation",
   "private": true,
   "type": "module",
@@ -24,7 +24,8 @@
       "launch.mjs",
       "edition.json",
       "ui/**/*",
-      "package.json"
+      "package.json",
+      "account.mjs"
     ],
     "directories": {
       "output": "release"

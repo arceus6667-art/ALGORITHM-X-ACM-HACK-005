@@ -1,0 +1,18 @@
+const site='https://agenttrap-ai-governance.arceus6667.chatgpt.site';
+export function createAccount({transport=fetch}={}){
+ let config=null,session=null,identity=null,selected=null,lastOtp=0,refreshing=null,generation=0;
+ async function configuration(){if(!config){const r=await transport(site+'/api/auth/config',{signal:AbortSignal.timeout(12000)});if(!r.ok)throw Error('Account service unavailable');config=await r.json();if(!/^https:\/\/[a-z0-9]+\.supabase\.co$/.test(config.url))throw Error('Invalid account service');}return config;}
+ async function request(path,body,token){const c=await configuration();const r=await transport(c.url+path,{method:body?'POST':'GET',headers:{apikey:c.publishableKey,'Content-Type':'application/json',...(token?{Authorization:'Bearer '+token}:{})},...(body?{body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(15000)});const d=await r.json();if(!r.ok)throw Error(d.msg||d.message||d.error_description||d.error||'Account request failed');return d;}
+ async function refresh(){if(!session)throw Error('Register or sign in with your verified email');if(session.expires_at<Date.now()/1000+90){if(!refreshing)refreshing=request('/auth/v1/token?grant_type=refresh_token',{refresh_token:session.refresh_token}).then(d=>{session={...d,expires_at:Date.now()/1000+d.expires_in};}).finally(()=>{refreshing=null;});await refreshing;}return session.access_token;}
+ async function rpc(action,payload={}){const current=generation;const result=action==='verify_domain'?await request('/functions/v1/agenttrap-verify-domain',payload,await refresh()):await request('/rest/v1/rpc/agenttrap_enterprise',{action,payload},await refresh());if(current!==generation)throw Error('Account changed during request');if(['me','profile','create_company','accept_invite'].includes(action)){identity=result;if(selected&&!result.companies.some(c=>c.id===selected))selected=null;selected||=result.companies[0]?.id;}return result;}
+ return{
+  async otp(email,register){email=String(email).trim().toLowerCase();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw Error('Enter a valid email');if(Date.now()-lastOtp<60000)throw Error('Wait 60 seconds before requesting another code');lastOtp=Date.now();await request('/auth/v1/otp',{email,create_user:register===true});return {sent:true};},
+  async verify(email,code,name){generation++;session=null;identity=null;selected=null;const d=await request('/auth/v1/verify',{email:String(email).trim().toLowerCase(),token:String(code).trim(),type:'email'});if(!d.access_token||!d.user?.email_confirmed_at)throw Error('Verified email session required');session={...d,expires_at:Date.now()/1000+d.expires_in};await rpc('me');if(name)await rpc('profile',{name});return this.state();},
+  async logout(){generation++;if(session)await request('/auth/v1/logout',{},await refresh()).catch(()=>{});session=null;identity=null;selected=null;},
+  async state(){if(!session)return {authenticated:false,requireAccount:true};await rpc('me');return {authenticated:true,requireAccount:true,userId:identity.userId,email:identity.email,profile:identity.profile,companies:identity.companies,companyId:selected};},
+  async select(companyId){await rpc('me');if(!identity.companies.some(c=>c.id===companyId))throw Error('Company access denied');selected=companyId;return this.state();},
+  async company(){await rpc('me');const company=identity.companies.find(c=>c.id===selected);if(!company)throw Error('Create a company or accept your company invitation first');return company;},
+  async authorize(edition,operation){const company=await this.company();await rpc('authorize',{companyId:company.id,edition,operation});return company;},
+  rpc,
+ };
+}
