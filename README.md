@@ -6,12 +6,12 @@
 
 Inspect sensitive assets, apply explicit policies, and preserve evidence of the decisions that matter.
 
-![Release](https://img.shields.io/badge/version-0.3.1-27c5d3?style=for-the-badge&labelColor=071a30)
+![Release](https://img.shields.io/badge/version-0.3.2-27c5d3?style=for-the-badge&labelColor=071a30)
 ![Status](https://img.shields.io/badge/status-hackathon_evaluation-f0b859?style=for-the-badge&labelColor=071a30)
 ![Desktop](https://img.shields.io/badge/desktop-Electron-7bc8ec?style=for-the-badge&labelColor=071a30)
 ![Database](https://img.shields.io/badge/backend-Supabase-3ecf8e?style=for-the-badge&labelColor=071a30)
 
-[**Explore the website**](https://agenttrap-ai-governance.arceus6667.chatgpt.site/) · [**Try the demo**](https://agenttrap-ai-governance.arceus6667.chatgpt.site/demo.html) · [**Download CRM**](https://agenttrap-ai-governance.arceus6667.chatgpt.site/downloads.html) · [**Read the test report**](docs/verification-0.3.1.md)
+[**Explore the website**](https://agenttrap-ai-governance.arceus6667.chatgpt.site/) · [**Try the demo**](https://agenttrap-ai-governance.arceus6667.chatgpt.site/demo.html) · [**Download CRM**](https://agenttrap-ai-governance.arceus6667.chatgpt.site/downloads.html) · [**Read the test report**](docs/verification-0.3.2.md)
 
 </div>
 
@@ -84,8 +84,8 @@ New company workspaces receive a **seven-day hackathon evaluation**. Downloading
 
 **Windows users receive an actual `.exe` installer.** No Node.js installation or ZIP extraction is needed for the native Windows app.
 
-- [Windows x64 · Full](https://github.com/arceus6667-art/ALGORITHM-X-ACM-HACK-005/releases/download/desktop-v0.3.1/AgentTrap-0.3.1-win-x64-full.exe)
-- [Windows x64 · Trial](https://github.com/arceus6667-art/ALGORITHM-X-ACM-HACK-005/releases/download/desktop-v0.3.1/AgentTrap-0.3.1-win-x64-trial.exe)
+- [Windows x64 · Full](https://github.com/arceus6667-art/ALGORITHM-X-ACM-HACK-005/releases/download/desktop-v0.3.2/AgentTrap-0.3.2-win-x64-full.exe)
+- [Windows x64 · Trial](https://github.com/arceus6667-art/ALGORITHM-X-ACM-HACK-005/releases/download/desktop-v0.3.2/AgentTrap-0.3.2-win-x64-trial.exe)
 - [All releases and architectures](https://github.com/arceus6667-art/ALGORITHM-X-ACM-HACK-005/releases)
 
 Native build targets include Windows 10/11 x64 and ARM64, macOS Intel and Apple Silicon, and Linux x64 and ARM64. macOS packages are ZIPs; Linux packages are TAR.GZ files. Assets appear after their builds complete. These evaluation packages are unsigned; production distribution needs trusted signing and platform-specific validation.
@@ -177,9 +177,9 @@ Website build output is a Cloudflare-compatible Worker under `dist/server/index.
 
 ## Verification and current boundaries
 
-**Eight automated tests pass in the 0.3.1 verification run.** They cover TraceSeal registration/comparison, saved metadata, policy controls, approvals, audit tamper detection, magic-link account gating, desktop quotas, web expiry, browser permissions, simulated submission holds, and mocked notification transport. GitHub Actions runs the verification gate before native release builds.
+**Twelve automated tests pass in the 0.3.2 verification run.** They cover TraceSeal registration/comparison, saved metadata, policy controls, approvals, audit tamper detection, magic-link account gating, desktop quotas, web expiry, browser permissions, simulated submission holds, and mocked notification transport. GitHub Actions runs the verification gate before native release builds.
 
-[Read the complete verification report and live acceptance checklist →](docs/verification-0.3.1.md)
+[Read the complete verification report and live acceptance checklist →](docs/verification-0.3.2.md)
 
 <details>
 <summary><strong>What still needs live or production validation?</strong></summary>
@@ -199,7 +199,7 @@ Website build output is a Cloudflare-compatible Worker under `dist/server/index.
 - [Authentication and magic-link configuration](AUTH_SETUP.md)
 - [Company activation, domain verification, and operating requirements](docs/enterprise-activation.md)
 - [Desktop installation, permissions, privacy, and alerts](desktop/README.md)
-- [Verification report and acceptance tests](docs/verification-0.3.1.md)
+- [Verification report and acceptance tests](docs/verification-0.3.2.md)
 - [Demo terms and privacy](https://agenttrap-ai-governance.arceus6667.chatgpt.site/terms.html)
 
 ---

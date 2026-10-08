@@ -2,6 +2,8 @@
 
 This update adds the isolated administrator exposure simulation, a 19-section operating guide and browser companion 0.2.0 success feedback.
 
+All twelve automated tests passed in the development environment on 2026-10-08 UTC. The GitHub release verification gate passed; native Windows, macOS and Linux x64/ARM64 Trial and Full assets were produced.
+
 ## Automated acceptance coverage
 
 - Six simulation scenarios use current console rules where applicable; hypothetical downstream events are explicitly labelled.
