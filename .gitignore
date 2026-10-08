@@ -8,3 +8,5 @@ desktop/release/
 web/downloads/
 web/downloads-manifest.json
 supabase/.temp/
+
+web/guide.js

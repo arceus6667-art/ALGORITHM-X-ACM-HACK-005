@@ -73,7 +73,7 @@ if(!data.empty)applyWorkspace(data);else if(draft){applyWorkspace(draft);toast('
 syncStatus(data.empty?'Private workspace ready':'Saved workspace restored');
 })();crm.ready.catch(()=>{});
 window.addEventListener('agenttrap-auth',e=>{if(e.detail.event==='SIGNED_OUT')location.replace('/signin.html');});
-if(window.AgentTrapDesktop){window.AgentTrapConsole={state,renderers,labels,render,logEvent};window.dispatchEvent(new Event('agenttrap-console-ready'));}
+window.AgentTrapConsole={state,renderers,labels,render,logEvent,evaluate:scoreRequest};window.dispatchEvent(new Event('agenttrap-console-ready'));
 window.addEventListener('beforeunload',()=>{if(!crm.signedIn)try{sessionStorage.setItem('agenttrap-guest-draft',JSON.stringify(snapshot()));}catch{}});
 
 }

@@ -45,3 +45,9 @@ Desktop email callback: add `http://127.0.0.1:43127/auth/callback**` to Supabase
 
 ## TraceSeal original-file registration (0.3.1)
 Open TraceSeal provenance, select an original file and its classification, then click Register fingerprint. Select a candidate and Compare fingerprints. Registration hashes the exact bytes locally and persists metadata to your signed-in device workspace. Duplicate bytes reuse the existing reference. Images and PDFs support hashing; content extraction is not automatic. Different bytes require review and do not prove unauthorized use. Trial registration consumes one of the five analysis operations.
+
+## Exposure simulation and operating guide (0.3.2)
+
+Open **Exposure simulation** for six isolated scenarios, a fictional employee roster, response timelines, modeled alerts, review and JSON evidence export. Add sandbox employees locally or load your permitted company roster as a separate read-only reference. This never changes real accounts, company thresholds or live audit records. Hypothetical onward transfers require real gateway/provider evidence before they can be treated as incidents. Simulation containment and notifications perform no live actions.
+
+Open **Documentation** for the complete 19-section operator guide, also available in [docs/operator-guide.md](../docs/operator-guide.md). Browser companion 0.2.0 displays separate visible success messages for CRM pairing and website permission enablement. Install the new CRM to obtain the simulation; updating only the website or extension does not replace an existing installer.

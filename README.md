@@ -213,3 +213,9 @@ Website build output is a Cloudflare-compatible Worker under `dist/server/index.
 [Explore](https://agenttrap-ai-governance.arceus6667.chatgpt.site/) · [Download](https://agenttrap-ai-governance.arceus6667.chatgpt.site/downloads.html) · [Documentation](docs/)
 
 </div>
+
+### Admin exposure simulation · desktop 0.3.2
+
+A separate sandbox rehearses six policy, credential, modified-file, internal-use, checker-offline and hypothetical onward-transfer scenarios. It includes fictional employees, step-by-step/animated timelines, incident acknowledgement/review and clearly labelled evidence exports. Actual company membership can be loaded as a read-only reference using existing permissions. No live provider requests, notifications, system-wide blocking or production audit writes occur.
+
+See the [complete administrator and employee operating guide](docs/operator-guide.md). The companion now shows prominent pairing and enabling success messages (extension 0.2.0).

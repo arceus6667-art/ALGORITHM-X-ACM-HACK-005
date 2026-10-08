@@ -2,7 +2,7 @@ name: Build desktop CRM downloads
 on:
   push:
     branches: [main]
-    paths: ['desktop/**', 'extension/**', 'scripts/package-desktop.mjs', '.github/workflows/desktop-release.yml', 'web/app.js', 'web/style.css', 'web/demo.html']
+    paths: ['desktop/**', 'extension/**', 'scripts/package-desktop.mjs', '.github/workflows/desktop-release.yml', 'web/app.js', 'web/style.css', 'web/demo.html', 'web/simulation.js', 'docs/operator-guide.md']
   workflow_dispatch:
 permissions:
   contents: read

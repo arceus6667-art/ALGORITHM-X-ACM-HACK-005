@@ -1,0 +1,5 @@
+import fs from 'node:fs/promises';
+const text=await fs.readFile('docs/operator-guide.md','utf8');
+const sections=text.split(/^## /m).slice(1).map(s=>{const [title,...body]=s.split('\n');return{title,body:body.join('\n').trim()};});
+const script=`'use strict';\n(()=>{const h=window.AgentTrapConsole;if(!h)return;const sections=${JSON.stringify(sections)};const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));const original=h.renderers.docs;h.renderers.docs=()=>original()+'<div class="card doc-guide"><h2>Administrator & employee operating guide · v0.3.2</h2><p>Expand a section for the complete procedure. Read setup, employee access, live pairing, simulation, alerts and troubleshooting in order.</p>'+sections.map((s,i)=>'<details '+(i===0?'open':'')+'><summary>'+esc(s.title)+'</summary><ol>'+s.body.split('\\n').filter(x=>/^\\d+\\. /.test(x)).map(x=>'<li>'+esc(x.replace(/^\\d+\\. /,''))+'</li>').join('')+'</ol></details>').join('')+'</div>';if(location.hash==='#docs')h.render();})();\n`;
+await fs.writeFile('web/guide.js',script);

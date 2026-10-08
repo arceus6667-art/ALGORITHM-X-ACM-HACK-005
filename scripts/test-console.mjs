@@ -6,6 +6,7 @@ import {JSDOM} from 'jsdom';
 const app=await fs.readFile('web/app.js','utf8');
 const html=await fs.readFile('web/demo.html','utf8');
 const wait=()=>new Promise(r=>setTimeout(r,30));
+async function until(check){const end=Date.now()+2000;while(!check()){if(Date.now()>end)throw Error('Expected observer state did not settle');await new Promise(r=>setTimeout(r,10));}}
 async function consoleDom(saved){
  const dom=new JSDOM(html,{url:'http://localhost/#provenance',runScripts:'outside-only'}),w=dom.window;
  Object.defineProperty(w,'crypto',{value:webcrypto});w.TextEncoder=TextEncoder;w.scrollTo=()=>{};w.AgentTrapDesktop={};w.AgentTrapAuth={ready:Promise.resolve(),session:{user:{id:'test'}},headers:async()=>({})};
@@ -15,7 +16,7 @@ async function consoleDom(saved){
  return{dom,w,get saved(){return workspace;}};
 }
 function file(w,id,name,bytes){const input=w.document.getElementById(id);Object.defineProperty(input,'files',{configurable:true,value:[{name,size:Buffer.byteLength(bytes),arrayBuffer:async()=>new TextEncoder().encode(bytes).buffer,text:async()=>bytes}]});}
-async function submit(w,id){const form=w.document.getElementById(id),button=form.querySelector('button[type=submit],button:not([type])');assert.ok(button);form.dispatchEvent(new w.SubmitEvent('submit',{cancelable:true,bubbles:true,submitter:button}));await wait();}
+async function submit(w,id){const form=w.document.getElementById(id),button=form.querySelector('button[type=submit],button:not([type])'),before=w.document.getElementById('toast').textContent,eventCount=w.AgentTrapConsole.state.events.length;assert.ok(button);form.dispatchEvent(new w.SubmitEvent('submit',{cancelable:true,bubbles:true,submitter:button}));await until(()=>!w.AgentTrapConsole.state.busy&&(id==='verify-form'?w.AgentTrapConsole.state.events.length>eventCount:(w.AgentTrapConsole.state.events.length>eventCount||w.document.getElementById('toast').textContent!==before)));await wait();}
 test('TraceSeal empty state, original registration, exact/modified comparison, deduplication and restore',async()=>{
  const c=await consoleDom(),{w,dom}=c;try{
  assert.equal(w.document.querySelector('#verify-form button').disabled,true);
@@ -47,9 +48,9 @@ test('Browser observer holds blocked submissions, resumes allowed prompts, hashe
  Object.defineProperty(w,'crypto',{value:webcrypto});w.TextEncoder=TextEncoder;let allow=false,offline=false,submissions=0,events=[];
  w.chrome={runtime:{sendMessage:async m=>{events.push(m.event);if(offline)throw Error('offline');return{ok:true,allowed:allow,decision:allow?'ALLOW':'BLOCK',risk:allow?10:95,threshold:80};}}};
  w.eval(content);const form=w.document.querySelector('form');form.requestSubmit=()=>submissions++;w.document.querySelector('textarea').value='password=secret123 email@company.example';
- form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(submissions,0);assert.match(w.document.getElementById('agenttrap-protection-status').textContent,/blocked/);assert.doesNotMatch(events[0].preview,/secret123|email@/);
- allow=true;form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(submissions,1);
- offline=true;form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await wait();assert.equal(submissions,1);assert.match(w.document.getElementById('agenttrap-protection-status').textContent,/held/);
- offline=false;const input=w.document.querySelector('input');Object.defineProperty(input,'files',{value:[{name:'photo.png',size:3,arrayBuffer:async()=>new TextEncoder().encode('abc').buffer}]});input.dispatchEvent(new w.Event('change',{bubbles:true,cancelable:true}));await wait();assert.equal(events.at(-1).fingerprint,'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
+ form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await until(()=>/blocked/.test(w.document.getElementById('agenttrap-protection-status')?.textContent||''));assert.equal(submissions,0);assert.match(w.document.getElementById('agenttrap-protection-status').textContent,/blocked/);assert.doesNotMatch(events[0].preview,/secret123|email@/);
+ allow=true;form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await until(()=>submissions===1);
+ offline=true;form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await until(()=>/held/.test(w.document.getElementById('agenttrap-protection-status')?.textContent||''));assert.equal(submissions,1);assert.match(w.document.getElementById('agenttrap-protection-status').textContent,/held/);
+ offline=false;const input=w.document.querySelector('input');Object.defineProperty(input,'files',{value:[{name:'photo.png',size:3,arrayBuffer:async()=>new TextEncoder().encode('abc').buffer}]});input.dispatchEvent(new w.Event('change',{bubbles:true,cancelable:true}));await until(()=>events.at(-1)?.kind==='file_selected');assert.equal(events.at(-1).fingerprint,'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad');
  dom.window.close();
 });
